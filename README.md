@@ -14,7 +14,7 @@ docker run -d --name htredirect -p 8080:80 -v ./htredirect.yml:/app/htredirect.y
 
 If you want to use compose, you can start with the [`docker-compose.yml`](deployments/docker-compose.yml) in [`/deployments`](deployments)
 
-Alternatively, you can build and run the service directly, but note that the binary requires `.htredirect.yml` and `web/templates/*` in its relative path.
+Alternatively, you can build and run the service directly, but note that the binary requires `htredirect.yml` and `web/templates/*` in its relative path.
 
 ## Configuration
 
