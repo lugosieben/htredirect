@@ -20,6 +20,7 @@ func InitTemplates() {
 }
 
 func Write404(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
 	err := template404.Execute(w, struct {
 		Version string
 		Host    string
