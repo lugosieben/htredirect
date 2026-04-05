@@ -24,9 +24,9 @@ entries:
   - target: "https://example.com/{path}" # URL to redirect to, supports redirecting the request {path}
     method: "permanent" # permanent (301) or temporary (302)
     rules: # All rules need to match for a redirect to happen
-      - field: "host" # host or path
-        comparator: "equal" # equal, regex
-        value: "example.net"
+      - field: "host" # host or path (trailing slashes are always stripped)
+        comparator: "equal" # equal, equal-insensitive, notequal, regex, notregex, prefix, suffix
+        value: "example.net" # value to compare against
 ```
 
 ## See it in action
