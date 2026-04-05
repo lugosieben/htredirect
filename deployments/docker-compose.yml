@@ -1,0 +1,11 @@
+services:
+  htredirect:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    image: htredirect:local
+    ports:
+      - "8080:80"
+    volumes:
+      - ../htredirect.yml:/app/htredirect.yml:ro
+    restart: unless-stopped
