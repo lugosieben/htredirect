@@ -44,8 +44,18 @@ func ParseRuleComparator(s string) (RuleComparator, error) {
 	switch s {
 	case "equal":
 		return RuleComparatorEqual, nil
+	case "equal-insensitive":
+		return RuleComparatorEqualInsensitive, nil
+	case "notequal":
+		return RuleComparatorNotEqual, nil
 	case "regex":
 		return RuleComparatorRegEx, nil
+	case "notregex":
+		return RuleComparatorNotRegEx, nil
+	case "prefix":
+		return RuleComparatorPrefix, nil
+	case "suffix":
+		return RuleComparatorSuffix, nil
 	default:
 		return 0, fmt.Errorf("unknown rule comparator: %s", s)
 	}
