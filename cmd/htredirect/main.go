@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/lugosieben/htredirect/config"
-	"github.com/lugosieben/htredirect/web"
+	"github.com/lugosieben/htredirect/internal/webserver"
 )
 
 func main() {
 	fmt.Printf("htredirect %s\n", config.VERSION)
 	config.Load()
-	web.Start(config.Port)
+	webserver.Start(config.Port)
 }

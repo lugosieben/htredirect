@@ -1,4 +1,4 @@
-package web
+package webserver
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddle "github.com/go-chi/chi/v5/middleware"
-	"github.com/lugosieben/htredirect/api/redirect"
+	"github.com/lugosieben/htredirect/internal/redirect"
 )
 
 func Start(port int) {

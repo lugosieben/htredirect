@@ -3,6 +3,7 @@ package config
 import (
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 type RuleField int
@@ -16,7 +17,12 @@ type RuleComparator int
 
 const (
 	RuleComparatorEqual RuleComparator = iota
+	RuleComparatorEqualInsensitive
+	RuleComparatorNotEqual
 	RuleComparatorRegEx
+	RuleComparatorNotRegEx
+	RuleComparatorPrefix
+	RuleComparatorSuffix
 )
 
 type Rule struct {
@@ -37,8 +43,19 @@ func (r Rule) Match(host string, path string) (bool, error) {
 	switch r.Comparator {
 	case RuleComparatorEqual:
 		return usedField == r.Value, nil
+	case RuleComparatorEqualInsensitive:
+		return strings.EqualFold(usedField, r.Value), nil
+	case RuleComparatorNotEqual:
+		return usedField != r.Value, nil
 	case RuleComparatorRegEx:
 		return regexp.MatchString(r.Value, usedField)
+	case RuleComparatorNotRegEx:
+		matched, err := regexp.MatchString(r.Value, usedField)
+		return !matched, err
+	case RuleComparatorPrefix:
+		return strings.HasPrefix(r.Value, usedField), nil
+	case RuleComparatorSuffix:
+		return strings.HasSuffix(r.Value, usedField), nil
 	}
 
 	return false, nil

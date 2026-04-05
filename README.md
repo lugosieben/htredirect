@@ -14,7 +14,7 @@ docker run -d --name htredirect -p 8080:80 -v ./htredirect.yml:/app/htredirect.y
 
 If you want to use compose, you can start with the [`docker-compose.yml`](deployments/docker-compose.yml) in [`/deployments`](deployments)
 
-Alternatively, you can build and run the service directly, but note that the binary requires `.htredirect.yml` and `web/templates/*` in its relative path.
+Alternatively, you can build and run the service directly, but note that the binary requires `htredirect.yml` and `web/templates/*` in its relative path.
 
 ## Configuration
 
@@ -24,9 +24,9 @@ entries:
   - target: "https://example.com/{path}" # URL to redirect to, supports redirecting the request {path}
     method: "permanent" # permanent (301) or temporary (302)
     rules: # All rules need to match for a redirect to happen
-      - field: "host" # host or path
-        comparator: "equal" # equal, regex
-        value: "example.net"
+      - field: "host" # host or path (trailing slashes are always stripped)
+        comparator: "equal" # equal, equal-insensitive, notequal, regex, notregex, prefix, suffix
+        value: "example.net" # value to compare against
 ```
 
 ## See it in action
