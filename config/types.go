@@ -55,6 +55,16 @@ const (
 	MethodTemporary
 )
 
+func (m *Method) String() string {
+	switch *m {
+	case MethodPermanent:
+		return "MethodPermanent"
+	case MethodTemporary:
+		return "MethodTemporary"
+	}
+	return "Unknown Method"
+}
+
 type Entry struct {
 	Target string
 	Method Method
