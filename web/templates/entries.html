@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>htredirect - Entries</title>
+</head>
+<body>
+    <table>
+        <tr>
+            <th>Target</th>
+            <th>Method</th>
+            <th>Rules</th>
+        </tr>
+        {{range .}}
+        <tr>
+            <td>{{.Target}}</td>
+            <td>{{.Method.String}}</td>
+            <td>
+                <ul>
+                    {{range .Rules}}
+                    <li>{{.String}}</li>
+                    {{end}}
+                </ul>
+            </td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html>

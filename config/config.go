@@ -6,6 +6,7 @@ import (
 )
 
 var Port int
+var WebPort int
 var Entries []*Entry
 
 func Load() {
@@ -23,5 +24,6 @@ func Load() {
 	}
 
 	Port = parsed.Port
+	WebPort = parsed.WebPort
 	Entries = parsed.Entries
 }

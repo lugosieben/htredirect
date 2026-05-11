@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -31,7 +32,37 @@ type Rule struct {
 	Value      string
 }
 
-func (r Rule) Match(host string, path string) (bool, error) {
+func (r *Rule) String() string {
+	var field string
+	switch r.Field {
+	case RuleFieldHost:
+		field = "host"
+	case RuleFieldPath:
+		field = "path"
+	}
+
+	var comparator string
+	switch r.Comparator {
+	case RuleComparatorEqual:
+		comparator = "EQUALS"
+	case RuleComparatorEqualInsensitive:
+		comparator = "EQUALS CASE-INSENSITIVE"
+	case RuleComparatorNotEqual:
+		comparator = "NOT EQUALS"
+	case RuleComparatorRegEx:
+		comparator = "REGEX"
+	case RuleComparatorNotRegEx:
+		comparator = "NOT REGEX"
+	case RuleComparatorPrefix:
+		comparator = "PREFIX"
+	case RuleComparatorSuffix:
+		comparator = "SUFFIX"
+	}
+
+	return fmt.Sprintf("%s %s \"%s\"", field, comparator, r.Value)
+}
+
+func (r *Rule) Match(host string, path string) (bool, error) {
 	var usedField string
 	switch r.Field {
 	case RuleFieldHost:
@@ -61,7 +92,7 @@ func (r Rule) Match(host string, path string) (bool, error) {
 	return false, nil
 }
 
-func (r Rule) MatchRequest(req *http.Request) (bool, error) {
+func (r *Rule) MatchRequest(req *http.Request) (bool, error) {
 	return r.Match(req.Host, req.URL.Path)
 }
 
