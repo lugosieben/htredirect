@@ -8,10 +8,10 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "./tmp/htredirect"
-  cmd = "go build -o ./tmp/htredirect ./cmd/htredirect"
+  cmd = "go build -buildvcs=false -o ./tmp/htredirect ./cmd/htredirect"
   delay = 1000
   entrypoint = ["./tmp/htredirect"]
-  exclude_dir = ["assets", "tmp", "vendor", "testdata"]
+  exclude_dir = ["tmp"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
@@ -35,7 +35,7 @@ tmp_dir = "tmp"
   [build.windows]
     args_bin = []
     bin = "tmp\\htredirect.exe"
-    cmd = "go build -o ./tmp/htredirect.exe ./cmd/htredirect"
+    cmd = "go build -buildvcs=false -o ./tmp/htredirect.exe ./cmd/htredirect"
     entrypoint = ["tmp\\htredirect.exe"]
     full_bin = ""
     post_cmd = []

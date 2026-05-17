@@ -21,11 +21,13 @@ type rawEntry struct {
 
 type rawConfig struct {
 	Port    int        `yaml:"port"`
+	WebPort int        `yaml:"webPort"`
 	Entries []rawEntry `yaml:"entries"`
 }
 
 type ParsedConfig struct {
 	Port    int
+	WebPort int
 	Entries []*Entry
 }
 
@@ -121,6 +123,7 @@ func ParseYAML(data []byte) (*ParsedConfig, error) {
 
 	return &ParsedConfig{
 		Port:    rawCfg.Port,
+		WebPort: rawCfg.WebPort,
 		Entries: entries,
 	}, nil
 }
