@@ -6,7 +6,13 @@ import (
 )
 
 func cleanString(s string) string {
-	return strings.TrimSpace(s)
+	if s == "" {
+		return s
+	}
+
+	s = strings.ReplaceAll(s, "\r", "")
+	parts := strings.Fields(s)
+	return strings.Join(parts, " ")
 }
 
 func cleanUpperString(s string) string {
@@ -36,18 +42,27 @@ func ParseEntriesString(entriesString string) (*[]*Entry, error) {
 
 func ParseEntry(entryString string) (*Entry, error) {
 	prefix := "REDIRECT WHERE"
+	cleaned := cleanString(entryString)
+	cleanedUpper := strings.ToUpper(cleaned)
 
-	if !strings.HasPrefix(cleanUpperString(entryString), prefix) {
+	if !strings.HasPrefix(cleanedUpper, prefix) {
 		return nil, fmt.Errorf("entry does not start with '%s': %s", prefix, entryString)
 	}
-	mainEntry := strings.Trim(entryString[len(prefix):], " \n")
-	parts := strings.Split(mainEntry, "TO")
-	rulesString := strings.Trim(parts[0], " \n")
+
+	mainEntry := strings.TrimSpace(cleaned[len(prefix):])
+	parts := strings.SplitN(mainEntry, "TO", 2)
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("missing TO in entry: %s", entryString)
+	}
+	rulesString := strings.TrimSpace(parts[0])
 	ruleStrings := strings.Split(rulesString, ",")
 	rules := make([]*Rule, len(ruleStrings))
 
 	for i, ruleString := range ruleStrings {
-		ruleParts := strings.Split(cleanString(ruleString), " ")
+		ruleParts := strings.Fields(cleanString(ruleString))
+		if len(ruleParts) < 3 {
+			return nil, fmt.Errorf("invalid rule format: %s", ruleString)
+		}
 		field, err := ParseRuleField(ruleParts[0])
 		if err != nil {
 			return nil, err
@@ -69,8 +84,11 @@ func ParseEntry(entryString string) (*Entry, error) {
 		}
 	}
 
-	redirectString := strings.Trim(parts[1], " \n")
-	redirectParts := strings.Split(redirectString, " ")
+	redirectString := strings.TrimSpace(parts[1])
+	redirectParts := strings.Fields(redirectString)
+	if len(redirectParts) < 2 {
+		return nil, fmt.Errorf("invalid redirect target/method: %s", redirectString)
+	}
 	target := redirectParts[0]
 	method, err := ParseMethod(redirectParts[1])
 	if err != nil {
