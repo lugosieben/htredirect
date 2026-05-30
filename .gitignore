@@ -1,4 +1,4 @@
-htredirect.yml
+*.htredirect
 
 *.exe
 *.exe~

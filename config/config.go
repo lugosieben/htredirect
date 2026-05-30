@@ -12,18 +12,19 @@ var Entries []*Entry
 func Load() {
 	fmt.Println("Loading configuration")
 
-	path := "htredirect.yml"
-	dat, err := os.ReadFile(path)
+	rulesPath := "rules.htredirect"
+	rulesDat, err := os.ReadFile(rulesPath)
 	if err != nil {
 		panic(err)
 	}
 
-	parsed, err := ParseYAML(dat)
+	entries, err := ParseEntriesString(string(rulesDat))
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("Entries found: %d\n", len(*entries))
 
-	Port = parsed.Port
-	WebPort = parsed.WebPort
-	Entries = parsed.Entries
+	Port = 80
+	WebPort = 8080
+	Entries = *entries
 }

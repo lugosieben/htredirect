@@ -14,6 +14,16 @@ const (
 	RuleFieldPath
 )
 
+func (rf RuleField) String() string {
+	switch rf {
+	case RuleFieldHost:
+		return "HOST"
+	case RuleFieldPath:
+		return "PATH"
+	}
+	return "UNKNOWN"
+}
+
 type RuleComparator int
 
 const (
@@ -26,73 +36,116 @@ const (
 	RuleComparatorSuffix
 )
 
+func (rc RuleComparator) String() string {
+	switch rc {
+	case RuleComparatorEqual:
+		return "EQUALS"
+	case RuleComparatorEqualInsensitive:
+		return "EQUALS CASE-INSENSITIVE"
+	case RuleComparatorNotEqual:
+		return "NOT EQUALS"
+	case RuleComparatorRegEx:
+		return "REGEX"
+	case RuleComparatorNotRegEx:
+		return "NOT REGEX"
+	case RuleComparatorPrefix:
+		return "PREFIX"
+	case RuleComparatorSuffix:
+		return "SUFFIX"
+	}
+	return "UNKNOWN"
+}
+
+type RuleMod int
+
+const (
+	RuleModNot RuleMod = iota
+	RuleModLower
+)
+
+func (rcm RuleMod) String() string {
+	switch rcm {
+	case RuleModNot:
+		return "NOT"
+	case RuleModLower:
+		return "LOWER"
+	}
+	return "UNKNOWN"
+}
+
 type Rule struct {
 	Field      RuleField
 	Comparator RuleComparator
+	Mods       []RuleMod
 	Value      string
 }
 
-func (r *Rule) String() string {
+func (r Rule) String() string {
+	field := r.Field.String()
+	comparator := r.Comparator.String()
+	mods := r.Mods
+	modStrings := make([]string, len(mods))
+	for idx, mod := range mods {
+		modStrings[idx] = mod.String()
+	}
+	modsString := strings.Join(modStrings, " ")
+
+	return fmt.Sprintf("%s %s %s \"%s\"", field, modsString, comparator, r.Value)
+}
+
+func (r Rule) Match(host string, path string) (bool, error) {
 	var field string
 	switch r.Field {
 	case RuleFieldHost:
-		field = "host"
+		field = host
 	case RuleFieldPath:
-		field = "path"
+		field = path
 	}
 
-	var comparator string
-	switch r.Comparator {
-	case RuleComparatorEqual:
-		comparator = "EQUALS"
-	case RuleComparatorEqualInsensitive:
-		comparator = "EQUALS CASE-INSENSITIVE"
-	case RuleComparatorNotEqual:
-		comparator = "NOT EQUALS"
-	case RuleComparatorRegEx:
-		comparator = "REGEX"
-	case RuleComparatorNotRegEx:
-		comparator = "NOT REGEX"
-	case RuleComparatorPrefix:
-		comparator = "PREFIX"
-	case RuleComparatorSuffix:
-		comparator = "SUFFIX"
+	invert := false
+	for _, mod := range r.Mods {
+		switch mod {
+		case RuleModNot:
+			invert = !invert
+		case RuleModLower:
+			field = strings.ToLower(field)
+		}
 	}
 
-	return fmt.Sprintf("%s %s \"%s\"", field, comparator, r.Value)
+	match, err := r.Compare(field)
+	if err != nil {
+		return false, err
+	}
+
+	if invert {
+		return !match, nil
+	}
+	return match, nil
 }
 
-func (r *Rule) Match(host string, path string) (bool, error) {
-	var usedField string
-	switch r.Field {
-	case RuleFieldHost:
-		usedField = host
-	case RuleFieldPath:
-		usedField = path
-	}
-
+func (r Rule) Compare(field string) (bool, error) {
 	switch r.Comparator {
 	case RuleComparatorEqual:
-		return usedField == r.Value, nil
+		return field == r.Value, nil
 	case RuleComparatorEqualInsensitive:
-		return strings.EqualFold(usedField, r.Value), nil
+		return strings.EqualFold(field, r.Value), nil
 	case RuleComparatorNotEqual:
-		return usedField != r.Value, nil
+		return field != r.Value, nil
 	case RuleComparatorRegEx:
-		return regexp.MatchString(r.Value, usedField)
+		return regexp.MatchString(r.Value, field)
 	case RuleComparatorNotRegEx:
-		matched, err := regexp.MatchString(r.Value, usedField)
+		matched, err := regexp.MatchString(r.Value, field)
 		return !matched, err
 	case RuleComparatorPrefix:
-		return strings.HasPrefix(r.Value, usedField), nil
+		return strings.HasPrefix(r.Value, field), nil
 	case RuleComparatorSuffix:
-		return strings.HasSuffix(r.Value, usedField), nil
+		return strings.HasSuffix(r.Value, field), nil
 	}
 
 	return false, nil
 }
 
-func (r *Rule) MatchRequest(req *http.Request) (bool, error) {
+func (r Rule) MatchRequest(req *http.Request) (bool, error) {
 	return r.Match(req.Host, req.URL.Path)
 }
 
@@ -106,9 +159,9 @@ const (
 func (m *Method) String() string {
 	switch *m {
 	case MethodPermanent:
-		return "MethodPermanent"
+		return "Permanent"
 	case MethodTemporary:
-		return "MethodTemporary"
+		return "Temporary"
 	}
 	return "Unknown Method"
 }

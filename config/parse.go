@@ -2,40 +2,93 @@ package config
 
 import (
 	"fmt"
-	"regexp"
-
-	"gopkg.in/yaml.v3"
+	"strings"
 )
 
-type rawRule struct {
-	Field      string `yaml:"field"`
-	Comparator string `yaml:"comparator"`
-	Value      string `yaml:"value"`
+func cleanString(s string) string {
+	return strings.TrimSpace(s)
 }
 
-type rawEntry struct {
-	Target string    `yaml:"target"`
-	Method string    `yaml:"method"`
-	Rules  []rawRule `yaml:"rules"`
+func cleanUpperString(s string) string {
+	return strings.ToUpper(cleanString(s))
 }
 
-type rawConfig struct {
-	Port    int        `yaml:"port"`
-	WebPort int        `yaml:"webPort"`
-	Entries []rawEntry `yaml:"entries"`
+func ParseEntryStrings(entries []string) (*[]*Entry, error) {
+	var parsedEntries []*Entry
+	for _, entryString := range entries {
+		if cleanString(entryString) == "" {
+			continue
+		}
+		entry, err := ParseEntry(entryString)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing entry: %s", err)
+		}
+		parsedEntries = append(parsedEntries, entry)
+	}
+
+	return &parsedEntries, nil
 }
 
-type ParsedConfig struct {
-	Port    int
-	WebPort int
-	Entries []*Entry
+func ParseEntriesString(entriesString string) (*[]*Entry, error) {
+	entries := strings.Split(entriesString, ";")
+	return ParseEntryStrings(entries)
+}
+
+func ParseEntry(entryString string) (*Entry, error) {
+	prefix := "REDIRECT WHERE"
+
+	if !strings.HasPrefix(cleanUpperString(entryString), prefix) {
+		return nil, fmt.Errorf("entry does not start with '%s': %s", prefix, entryString)
+	}
+	mainEntry := strings.Trim(entryString[len(prefix):], " \n")
+	parts := strings.Split(mainEntry, "TO")
+	rulesString := strings.Trim(parts[0], " \n")
+	ruleStrings := strings.Split(rulesString, ",")
+	rules := make([]*Rule, len(ruleStrings))
+
+	for i, ruleString := range ruleStrings {
+		ruleParts := strings.Split(cleanString(ruleString), " ")
+		field, err := ParseRuleField(ruleParts[0])
+		if err != nil {
+			return nil, err
+		}
+		comparator, err := ParseRuleComparator(ruleParts[len(ruleParts)-2])
+		if err != nil {
+			return nil, err
+		}
+		comparatorMods, err := ParseRuleComparatorMods(ruleParts[1 : len(ruleParts)-2])
+		if err != nil {
+			return nil, err
+		}
+
+		rules[i] = &Rule{
+			Field:      field,
+			Comparator: comparator,
+			Mods:       comparatorMods,
+			Value:      ruleParts[len(ruleParts)-1],
+		}
+	}
+
+	redirectString := strings.Trim(parts[1], " \n")
+	redirectParts := strings.Split(redirectString, " ")
+	target := redirectParts[0]
+	method, err := ParseMethod(redirectParts[1])
+	if err != nil {
+		return nil, err
+	}
+
+	return &Entry{
+		Rules:  rules,
+		Target: target,
+		Method: method,
+	}, nil
 }
 
 func ParseRuleField(s string) (RuleField, error) {
-	switch s {
-	case "host":
+	switch cleanUpperString(s) {
+	case "HOST":
 		return RuleFieldHost, nil
-	case "path":
+	case "PATH":
 		return RuleFieldPath, nil
 	default:
 		return 0, fmt.Errorf("unknown rule field: %s", s)
@@ -43,87 +96,50 @@ func ParseRuleField(s string) (RuleField, error) {
 }
 
 func ParseRuleComparator(s string) (RuleComparator, error) {
-	switch s {
-	case "equal":
+	switch cleanUpperString(s) {
+	case "EQUALS":
 		return RuleComparatorEqual, nil
-	case "equal-insensitive":
-		return RuleComparatorEqualInsensitive, nil
-	case "notequal":
-		return RuleComparatorNotEqual, nil
-	case "regex":
+	case "MATCHES":
 		return RuleComparatorRegEx, nil
-	case "notregex":
-		return RuleComparatorNotRegEx, nil
-	case "prefix":
+	case "PREFIX":
 		return RuleComparatorPrefix, nil
-	case "suffix":
+	case "SUFFIX":
 		return RuleComparatorSuffix, nil
 	default:
 		return 0, fmt.Errorf("unknown rule comparator: %s", s)
 	}
 }
 
+func ParseRuleComparatorMod(s string) (RuleMod, error) {
+	switch cleanUpperString(s) {
+	case "NOT":
+		return RuleModNot, nil
+	case "LOWER":
+		return RuleModLower, nil
+	default:
+		return 0, fmt.Errorf("unknown rule comparator mod: %s", s)
+	}
+}
+
+func ParseRuleComparatorMods(strings []string) ([]RuleMod, error) {
+	var mods []RuleMod
+	for _, s := range strings {
+		mod, err := ParseRuleComparatorMod(s)
+		if err != nil {
+			return nil, err
+		}
+		mods = append(mods, mod)
+	}
+	return mods, nil
+}
+
 func ParseMethod(s string) (Method, error) {
-	switch s {
-	case "permanent":
+	switch cleanUpperString(s) {
+	case "PERMANENT":
 		return MethodPermanent, nil
-	case "temporary":
+	case "TEMPORARY":
 		return MethodTemporary, nil
 	default:
 		return 0, fmt.Errorf("unknown method: %s", s)
 	}
-}
-
-func ParseYAML(data []byte) (*ParsedConfig, error) {
-	var rawCfg rawConfig
-	if err := yaml.Unmarshal(data, &rawCfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
-	}
-
-	var entries []*Entry
-	for i, rawEnt := range rawCfg.Entries {
-		method, err := ParseMethod(rawEnt.Method)
-		if err != nil {
-			return nil, fmt.Errorf("entry %d: %w", i, err)
-		}
-
-		var rules []*Rule
-		for j, rawRule := range rawEnt.Rules {
-			field, err := ParseRuleField(rawRule.Field)
-			if err != nil {
-				return nil, fmt.Errorf("entry %d, rule %d: %w", i, j, err)
-			}
-
-			comparator, err := ParseRuleComparator(rawRule.Comparator)
-			if err != nil {
-				return nil, fmt.Errorf("entry %d, rule %d: %w", i, j, err)
-			}
-
-			if comparator == RuleComparatorRegEx {
-				if _, err := regexp.Compile(rawRule.Value); err != nil {
-					return nil, fmt.Errorf("entry %d, rule %d: invalid regex: %w", i, j, err)
-				}
-			}
-
-			rule := &Rule{
-				Field:      field,
-				Comparator: comparator,
-				Value:      rawRule.Value,
-			}
-			rules = append(rules, rule)
-		}
-
-		entry := &Entry{
-			Target: rawEnt.Target,
-			Method: method,
-			Rules:  rules,
-		}
-		entries = append(entries, entry)
-	}
-
-	return &ParsedConfig{
-		Port:    rawCfg.Port,
-		WebPort: rawCfg.WebPort,
-		Entries: entries,
-	}, nil
 }
