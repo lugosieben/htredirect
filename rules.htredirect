@@ -1,3 +1,0 @@
-REDIRECT WHERE
-HOST LOWER EQUALS 'gh.lugo.ovh'
-TO 'https://github.com/lugosieben/{path}' TEMPORARY;
