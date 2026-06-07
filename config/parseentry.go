@@ -5,20 +5,6 @@ import (
 	"strings"
 )
 
-func cleanString(s string) string {
-	if s == "" {
-		return s
-	}
-
-	s = strings.ReplaceAll(s, "\r", "")
-	parts := strings.Fields(s)
-	return strings.Join(parts, " ")
-}
-
-func cleanUpperString(s string) string {
-	return strings.ToUpper(cleanString(s))
-}
-
 func ParseEntryStrings(entries []string) (*[]*Entry, error) {
 	var parsedEntries []*Entry
 	for _, entryString := range entries {
@@ -36,8 +22,9 @@ func ParseEntryStrings(entries []string) (*[]*Entry, error) {
 }
 
 func ParseEntriesString(entriesString string) (*[]*Entry, error) {
-	entries := strings.Split(entriesString, ";")
-	return ParseEntryStrings(entries)
+	entryStrings := strings.Split(entriesString, ";")
+
+	return ParseEntryStrings(entryStrings)
 }
 
 func ParseEntry(entryString string) (*Entry, error) {
