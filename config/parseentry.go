@@ -3,33 +3,29 @@ package config
 import (
 	"fmt"
 	"strings"
+
+	"github.com/lugosieben/htredirect/internal/util"
 )
 
-func ParseEntryStrings(entries []string) (*[]*Entry, error) {
-	var parsedEntries []*Entry
+func ParseEntryStrings(entries []string) ([]Entry, error) {
+	var parsedEntries []Entry
 	for _, entryString := range entries {
-		if cleanString(entryString) == "" {
+		if util.CleanString(entryString) == "" {
 			continue
 		}
 		entry, err := ParseEntry(entryString)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing entry: %s", err)
 		}
-		parsedEntries = append(parsedEntries, entry)
+		parsedEntries = append(parsedEntries, *entry)
 	}
 
-	return &parsedEntries, nil
-}
-
-func ParseEntriesString(entriesString string) (*[]*Entry, error) {
-	entryStrings := strings.Split(entriesString, ";")
-
-	return ParseEntryStrings(entryStrings)
+	return parsedEntries, nil
 }
 
 func ParseEntry(entryString string) (*Entry, error) {
 	prefix := "REDIRECT WHERE"
-	cleaned := cleanString(entryString)
+	cleaned := util.CleanString(entryString)
 	cleanedUpper := strings.ToUpper(cleaned)
 
 	if !strings.HasPrefix(cleanedUpper, prefix) {
@@ -42,11 +38,11 @@ func ParseEntry(entryString string) (*Entry, error) {
 		return nil, fmt.Errorf("missing TO in entry: %s", entryString)
 	}
 	rulesString := strings.TrimSpace(parts[0])
-	ruleStrings := strings.Split(rulesString, ",")
+	ruleStrings := util.CleanSplit(rulesString, ",")
 	rules := make([]*Rule, len(ruleStrings))
 
 	for i, ruleString := range ruleStrings {
-		ruleParts := strings.Fields(cleanString(ruleString))
+		ruleParts := util.ShellSplit(util.CleanString(ruleString))
 		if len(ruleParts) < 3 {
 			return nil, fmt.Errorf("invalid rule format: %s", ruleString)
 		}
@@ -90,7 +86,7 @@ func ParseEntry(entryString string) (*Entry, error) {
 }
 
 func ParseRuleField(s string) (RuleField, error) {
-	switch cleanUpperString(s) {
+	switch util.CleanUpperString(s) {
 	case "HOST":
 		return RuleFieldHost, nil
 	case "PATH":
@@ -101,7 +97,7 @@ func ParseRuleField(s string) (RuleField, error) {
 }
 
 func ParseRuleComparator(s string) (RuleComparator, error) {
-	switch cleanUpperString(s) {
+	switch util.CleanUpperString(s) {
 	case "EQUALS":
 		return RuleComparatorEqual, nil
 	case "MATCHES":
@@ -116,7 +112,7 @@ func ParseRuleComparator(s string) (RuleComparator, error) {
 }
 
 func ParseRuleComparatorMod(s string) (RuleMod, error) {
-	switch cleanUpperString(s) {
+	switch util.CleanUpperString(s) {
 	case "NOT":
 		return RuleModNot, nil
 	case "LOWER":
@@ -139,7 +135,7 @@ func ParseRuleComparatorMods(strings []string) ([]RuleMod, error) {
 }
 
 func ParseMethod(s string) (Method, error) {
-	switch cleanUpperString(s) {
+	switch util.CleanUpperString(s) {
 	case "PERMANENT":
 		return MethodPermanent, nil
 	case "TEMPORARY":
