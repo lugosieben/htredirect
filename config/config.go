@@ -11,8 +11,6 @@ var Port int
 var WebPort int
 var Entries []*Entry
 
-var readFiles []string
-
 func cleanString(s string) string {
 	if s == "" {
 		return s
@@ -47,7 +45,11 @@ func removeCommentLines(s string) string {
 	return strings.Join(out, "\n")
 }
 
-func expandHTRFString(htrfString string) (*[]string, error) {
+func expandHTRFString(htrfString string) ([]string, error) {
+	return expandHTRFStringRecursive(htrfString, make(map[string]bool))
+}
+
+func expandHTRFStringRecursive(htrfString string, readFiles map[string]bool) ([]string, error) {
 	var outStatements []string
 	inStatements := strings.Split(cleanString(removeCommentLines(htrfString)), ";")
 
@@ -57,9 +59,10 @@ func expandHTRFString(htrfString string) (*[]string, error) {
 			if filePath == "" {
 				return nil, fmt.Errorf("missing file path in READ statement: %s", statement)
 			}
-			if slices.Contains(readFiles, filePath) {
+			if readFiles[filePath] {
 				return nil, fmt.Errorf("circular reference detected in READ statements: %s", filePath)
 			}
+			readFiles[filePath] = true
 			innerDat, err := os.ReadFile(filePath)
 			if err != nil {
 				return nil, err
@@ -68,25 +71,29 @@ func expandHTRFString(htrfString string) (*[]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			outStatements = slices.Concat(outStatements, *innerStatements)
+			outStatements = slices.Concat(outStatements, innerStatements)
 			continue
 		}
 		outStatements = append(outStatements, statement)
 	}
 
-	return &outStatements, nil
+	return outStatements, nil
 }
 
 func Load() {
 	fmt.Println("Loading configuration")
 
-	rulesPath := "config.htredirect"
-	rulesDat, err := os.ReadFile(rulesPath)
+	rulesDat, err := os.ReadFile(MAINCONFIG)
 	if err != nil {
 		panic(err)
 	}
 
-	entries, err := ParseEntriesString(removeCommentLines(string(rulesDat)))
+	htrfStatements, err := expandHTRFString(string(rulesDat))
+	if err != nil {
+		panic(err)
+	}
+
+	entries, err := ParseEntryStrings(htrfStatements)
 	if err != nil {
 		panic(err)
 	}
