@@ -5,9 +5,9 @@ import (
 	"os"
 )
 
-var Port int
-var WebPort int
-var Entries []Entry
+var Port = 80
+var WebPort = 8080
+var Redirects []Entry
 
 func Load() {
 	fmt.Println("Loading configuration")
@@ -22,15 +22,22 @@ func Load() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Statements found: %d\n", len(htrfStatements))
-
-	entries, err := ParseEntryStrings(htrfStatements)
+	setStatements, redirectStatements, err := sortExpandedHTRFStrings(htrfStatements)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Parsed %d entries\n", len(entries))
+	fmt.Printf("Statements found: %d (%d config, %d redirects)\n", len(htrfStatements), len(setStatements), len(redirectStatements))
 
-	Port = 80
-	WebPort = 8080
-	Entries = entries
+	fmt.Printf("Parsing general configuration\n")
+	err = ParseSetStrings(setStatements)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Parsing redirects\n")
+	redirects, err := ParseRedirectStrings(redirectStatements)
+	if err != nil {
+		panic(err)
+	}
+	Redirects = redirects
 }

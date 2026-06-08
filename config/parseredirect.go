@@ -7,13 +7,13 @@ import (
 	"github.com/lugosieben/htredirect/internal/util"
 )
 
-func ParseEntryStrings(entries []string) ([]Entry, error) {
+func ParseRedirectStrings(redirectStrings []string) ([]Entry, error) {
 	var parsedEntries []Entry
-	for _, entryString := range entries {
-		if util.CleanString(entryString) == "" {
+	for _, redirectString := range redirectStrings {
+		if util.CleanString(redirectString) == "" {
 			continue
 		}
-		entry, err := ParseEntry(entryString)
+		entry, err := ParseRedirectString(redirectString)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing entry: %s", err)
 		}
@@ -23,19 +23,19 @@ func ParseEntryStrings(entries []string) ([]Entry, error) {
 	return parsedEntries, nil
 }
 
-func ParseEntry(entryString string) (*Entry, error) {
+func ParseRedirectString(redirectString string) (*Entry, error) {
 	prefix := "REDIRECT WHERE"
-	cleaned := util.CleanString(entryString)
+	cleaned := util.CleanString(redirectString)
 	cleanedUpper := strings.ToUpper(cleaned)
 
 	if !strings.HasPrefix(cleanedUpper, prefix) {
-		return nil, fmt.Errorf("entry does not start with '%s': %s", prefix, entryString)
+		return nil, fmt.Errorf("entry does not start with '%s': %s", prefix, redirectString)
 	}
 
-	mainEntry := strings.TrimSpace(cleaned[len(prefix):])
-	parts := strings.SplitN(mainEntry, "TO", 2)
+	main := strings.TrimSpace(cleaned[len(prefix):])
+	parts := strings.SplitN(main, "TO", 2)
 	if len(parts) < 2 {
-		return nil, fmt.Errorf("missing TO in entry: %s", entryString)
+		return nil, fmt.Errorf("missing TO in entry: %s", redirectString)
 	}
 	rulesString := strings.TrimSpace(parts[0])
 	ruleStrings := util.CleanSplit(rulesString, ",")
@@ -67,13 +67,13 @@ func ParseEntry(entryString string) (*Entry, error) {
 		}
 	}
 
-	redirectString := strings.TrimSpace(parts[1])
-	redirectParts := strings.Fields(redirectString)
-	if len(redirectParts) < 2 {
-		return nil, fmt.Errorf("invalid redirect target/method: %s", redirectString)
+	redirectionString := strings.TrimSpace(parts[1])
+	redirectionParts := strings.Fields(redirectionString)
+	if len(redirectionParts) < 2 {
+		return nil, fmt.Errorf("invalid redirect target/method: %s", redirectionString)
 	}
-	target := redirectParts[0]
-	method, err := ParseMethod(redirectParts[1])
+	target := redirectionParts[0]
+	method, err := ParseMethod(redirectionParts[1])
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ func InitTemplates() {
 }
 
 func WriteEntries(w http.ResponseWriter) {
-	err := templateEntries.Execute(w, config.Entries)
+	err := templateEntries.Execute(w, config.Redirects)
 	if err != nil {
 		fmt.Println("Error executing Entries template:", err)
 	}

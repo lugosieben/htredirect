@@ -10,7 +10,7 @@ import (
 )
 
 func expandHTRFString(htrfString string) ([]string, error) {
-	return expandHTRFStringRecursive(htrfString, make(map[string]bool))
+	return expandHTRFStringRecursive(htrfString, map[string]bool{MAINCONFIG: true})
 }
 
 func expandHTRFStringRecursive(htrfString string, readFiles map[string]bool) ([]string, error) {
@@ -24,7 +24,7 @@ func expandHTRFStringRecursive(htrfString string, readFiles map[string]bool) ([]
 				return nil, fmt.Errorf("missing file path in READ statement: %s", statement)
 			}
 			if readFiles[filePath] {
-				return nil, fmt.Errorf("circular reference detected in READ statements: %s", filePath)
+				return nil, fmt.Errorf("tried to READ already read file: %s", filePath)
 			}
 			readFiles[filePath] = true
 			fmt.Printf("Reading inner config: %s\n", filePath)
@@ -32,7 +32,7 @@ func expandHTRFStringRecursive(htrfString string, readFiles map[string]bool) ([]
 			if err != nil {
 				return nil, err
 			}
-			innerStatements, err := expandHTRFString(string(innerDat))
+			innerStatements, err := expandHTRFStringRecursive(string(innerDat), readFiles)
 			if err != nil {
 				return nil, err
 			}
@@ -43,4 +43,19 @@ func expandHTRFStringRecursive(htrfString string, readFiles map[string]bool) ([]
 	}
 
 	return outStatements, nil
+}
+
+func sortExpandedHTRFStrings(htrfStrings []string) ([]string, []string, error) {
+	var setStatements []string
+	var redirectStatements []string
+	for _, htrfString := range htrfStrings {
+		if strings.HasPrefix(util.CleanUpperString(htrfString), "SET") {
+			setStatements = append(setStatements, htrfString)
+		} else if strings.HasPrefix(util.CleanUpperString(htrfString), "REDIRECT") {
+			redirectStatements = append(redirectStatements, htrfString)
+		} else {
+			return nil, nil, fmt.Errorf("invalid statement prefix for statement: %s", htrfString)
+		}
+	}
+	return setStatements, redirectStatements, nil
 }

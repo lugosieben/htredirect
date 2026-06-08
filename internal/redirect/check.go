@@ -13,7 +13,7 @@ type Redirection struct {
 }
 
 func check(r *http.Request) (*Redirection, bool) {
-	for _, entry := range config.Entries {
+	for _, entry := range config.Redirects {
 		match, err := entry.MatchRequest(r)
 		if err != nil {
 			fmt.Printf("Error matching request to entry: %s\n", err)

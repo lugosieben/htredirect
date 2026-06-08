@@ -8,7 +8,7 @@ SET <KEY> = <VALUE>;
 
 ## Keys
 
-| Key       | Description                                               | Type |
-|-----------|-----------------------------------------------------------|------|
-| `PORT`    | Port to listen on for the Redirect Server (public facing) | int  |
-| `WEBPORT` | Port to listen on for the Web Server (Management)         | int  |
+| Key       | Description                                               | Type | Default |
+|-----------|-----------------------------------------------------------|------|---------|
+| `PORT`    | Port to listen on for the Redirect Server (public facing) | int  | 80      |
+| `WEBPORT` | Port to listen on for the Web Server (Management)         | int  | 8080    |
