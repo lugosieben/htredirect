@@ -1,4 +1,4 @@
-package webserver
+package redirectserver
 
 import (
 	"fmt"

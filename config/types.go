@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -12,6 +13,16 @@ const (
 	RuleFieldHost RuleField = iota
 	RuleFieldPath
 )
+
+func (rf RuleField) String() string {
+	switch rf {
+	case RuleFieldHost:
+		return "HOST"
+	case RuleFieldPath:
+		return "PATH"
+	}
+	return "UNKNOWN"
+}
 
 type RuleComparator int
 
@@ -25,37 +36,110 @@ const (
 	RuleComparatorSuffix
 )
 
+func (rc RuleComparator) String() string {
+	switch rc {
+	case RuleComparatorEqual:
+		return "EQUALS"
+	case RuleComparatorEqualInsensitive:
+		return "EQUALS CASE-INSENSITIVE"
+	case RuleComparatorNotEqual:
+		return "NOT EQUALS"
+	case RuleComparatorRegEx:
+		return "REGEX"
+	case RuleComparatorNotRegEx:
+		return "NOT REGEX"
+	case RuleComparatorPrefix:
+		return "PREFIX"
+	case RuleComparatorSuffix:
+		return "SUFFIX"
+	}
+	return "UNKNOWN"
+}
+
+type RuleMod int
+
+const (
+	RuleModNot RuleMod = iota
+	RuleModLower
+)
+
+func (rcm RuleMod) String() string {
+	switch rcm {
+	case RuleModNot:
+		return "NOT"
+	case RuleModLower:
+		return "LOWER"
+	}
+	return "UNKNOWN"
+}
+
 type Rule struct {
 	Field      RuleField
 	Comparator RuleComparator
+	Mods       []RuleMod
 	Value      string
 }
 
+func (r Rule) String() string {
+	field := r.Field.String()
+	comparator := r.Comparator.String()
+	mods := r.Mods
+	modStrings := make([]string, len(mods))
+	for idx, mod := range mods {
+		modStrings[idx] = mod.String()
+	}
+	modsString := strings.Join(modStrings, " ")
+
+	return fmt.Sprintf("%s %s %s \"%s\"", field, modsString, comparator, r.Value)
+}
+
 func (r Rule) Match(host string, path string) (bool, error) {
-	var usedField string
+	var field string
 	switch r.Field {
 	case RuleFieldHost:
-		usedField = host
+		field = host
 	case RuleFieldPath:
-		usedField = path
+		field = path
 	}
 
+	invert := false
+	for _, mod := range r.Mods {
+		switch mod {
+		case RuleModNot:
+			invert = !invert
+		case RuleModLower:
+			field = strings.ToLower(field)
+		}
+	}
+
+	match, err := r.Compare(field)
+	if err != nil {
+		return false, err
+	}
+
+	if invert {
+		return !match, nil
+	}
+	return match, nil
+}
+
+func (r Rule) Compare(field string) (bool, error) {
 	switch r.Comparator {
 	case RuleComparatorEqual:
-		return usedField == r.Value, nil
+		return field == r.Value, nil
 	case RuleComparatorEqualInsensitive:
-		return strings.EqualFold(usedField, r.Value), nil
+		return strings.EqualFold(field, r.Value), nil
 	case RuleComparatorNotEqual:
-		return usedField != r.Value, nil
+		return field != r.Value, nil
 	case RuleComparatorRegEx:
-		return regexp.MatchString(r.Value, usedField)
+		return regexp.MatchString(r.Value, field)
 	case RuleComparatorNotRegEx:
-		matched, err := regexp.MatchString(r.Value, usedField)
+		matched, err := regexp.MatchString(r.Value, field)
 		return !matched, err
 	case RuleComparatorPrefix:
-		return strings.HasPrefix(r.Value, usedField), nil
+		return strings.HasPrefix(r.Value, field), nil
 	case RuleComparatorSuffix:
-		return strings.HasSuffix(r.Value, usedField), nil
+		return strings.HasSuffix(r.Value, field), nil
 	}
 
 	return false, nil
@@ -72,12 +156,12 @@ const (
 	MethodTemporary
 )
 
-func (m *Method) String() string {
-	switch *m {
+func (m Method) String() string {
+	switch m {
 	case MethodPermanent:
-		return "MethodPermanent"
+		return "Permanent"
 	case MethodTemporary:
-		return "MethodTemporary"
+		return "Temporary"
 	}
 	return "Unknown Method"
 }
@@ -85,7 +169,7 @@ func (m *Method) String() string {
 type Entry struct {
 	Target string
 	Method Method
-	Rules  []*Rule
+	Rules  []Rule
 }
 
 func (e Entry) Match(host string, path string) (bool, error) {

@@ -1,4 +1,4 @@
-package webserver
+package redirectserver
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 func Start(port int) {
-	fmt.Printf("Starting server on port %d\n", port)
+	fmt.Printf("Starting redirectserver on port %d\n", port)
 	InitTemplates()
 
 	var r = chi.NewRouter()
