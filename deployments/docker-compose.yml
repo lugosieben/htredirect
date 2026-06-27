@@ -6,7 +6,6 @@ services:
     image: htredirect:local
     ports:
       - "80:80"
-      - "8080:8080"
     volumes:
       - ../htredirect.yml:/app/htredirect.yml:ro
     restart: unless-stopped
