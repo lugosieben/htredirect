@@ -156,8 +156,8 @@ const (
 	MethodTemporary
 )
 
-func (m *Method) String() string {
-	switch *m {
+func (m Method) String() string {
+	switch m {
 	case MethodPermanent:
 		return "Permanent"
 	case MethodTemporary:
@@ -169,7 +169,7 @@ func (m *Method) String() string {
 type Entry struct {
 	Target string
 	Method Method
-	Rules  []*Rule
+	Rules  []Rule
 }
 
 func (e Entry) Match(host string, path string) (bool, error) {

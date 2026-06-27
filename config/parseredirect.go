@@ -39,7 +39,7 @@ func ParseRedirectString(redirectString string) (*Entry, error) {
 	}
 	rulesString := strings.TrimSpace(parts[0])
 	ruleStrings := util.CleanSplit(rulesString, ",")
-	rules := make([]*Rule, len(ruleStrings))
+	rules := make([]Rule, len(ruleStrings))
 
 	for i, ruleString := range ruleStrings {
 		ruleParts := util.ShellSplit(util.CleanString(ruleString))
@@ -59,7 +59,7 @@ func ParseRedirectString(redirectString string) (*Entry, error) {
 			return nil, err
 		}
 
-		rules[i] = &Rule{
+		rules[i] = Rule{
 			Field:      field,
 			Comparator: comparator,
 			Mods:       comparatorMods,
