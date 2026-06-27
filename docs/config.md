@@ -3,7 +3,7 @@
 htredirect may be configured by htredirect files.
 These files should use the `.htredirect` extension.
 
-The main configuration file is `config.htredirect` next to the executable.
+The main configuration file is `config.htredirect` next to the executable by default. This can be changed with [environment variables](environment.md).
 
 
 ## Syntax

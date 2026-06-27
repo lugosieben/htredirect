@@ -6,10 +6,13 @@ import (
 )
 
 var Port = 80
-var WebPort = 8080
 var Redirects []Entry
 
 func Load() {
+	fmt.Printf("Reading environment variables\n")
+	replacePropertiesWithEnv()
+	fmt.Printf("Properties initialized\n")
+
 	fmt.Println("Loading configuration")
 
 	fmt.Printf("Reading config: %s\n", MAINCONFIG)

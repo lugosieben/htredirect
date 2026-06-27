@@ -33,17 +33,11 @@ func ParseSetString(s string) error {
 	value := parts[2]
 	switch util.CleanUpperString(key) {
 	case "PORT":
-		str, err := strconv.Atoi(value)
+		in, err := strconv.Atoi(value)
 		if err != nil {
 			return err
 		}
-		Port = str
-	case "WEBPORT":
-		str, err := strconv.Atoi(value)
-		if err != nil {
-			return err
-		}
-		WebPort = str
+		Port = in
 	default:
 		return fmt.Errorf("invalid configuration key in set string: %s", key)
 	}
